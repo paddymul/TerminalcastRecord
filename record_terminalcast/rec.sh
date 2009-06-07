@@ -1,0 +1,1 @@
+ python sig_play.py ; cp /Users/patrickmullen/.terminalcast/tcast_data /Users/patrickmullen/temp/downloads/rxvt/urxvt-git/src/test/myttyrec.out ; cp /Users/patrickmullen/.terminalcast/timing.js /Users/patrickmullen/temp/downloads/rxvt/urxvt-git/src/test/ ; cp /Users/patrickmullen/.terminalcast/sound.wav  /Users/patrickmullen/temp/downloads/rxvt/urxvt-git/src/test/foo.wav 
