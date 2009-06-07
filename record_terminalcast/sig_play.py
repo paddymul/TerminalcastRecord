@@ -41,7 +41,12 @@ tcast_timing = "%s/timing.js" % terminalcast_dir
 tcast_sound = "%s/sound.wav" % terminalcast_dir
 tcast_mp3 = "%s/sound.mp3" % terminalcast_dir
 tcast_ogg = "%s/sound.ogg" % terminalcast_dir
-
+for f in [tcast_file, tcast_timing, tcast_sound, tcast_ogg, tcast_mp3]:
+    print f
+    try:
+        os.remove(f)
+    except:
+        print "file probably didn't exist"
 if (child_pid != 0):
     # We're the parent
 
@@ -108,9 +113,15 @@ else:
     # the child is no more... (assuming success)
     """
 print "done"
+
+os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
+#os.system("oggenc2 -q2 --resample 10000 foo.wav -o fooq2-10k.ogg")
+os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
 zf = ZipFile("%s/tc.zip" % terminalcast_dir,"w")
 zf.write(tcast_file, "tcast_data")
 zf.write(tcast_timing, "timing.js")
+zf.write(tcast_ogg, "tcast_sound.ogg")
+zf.write(tcast_mp3, "tcast_sound.mp3")
 zf.close ()
 #print "Status = ", child_status
 #print "Child stdout [",os.read(child_out_r,999),"]"
