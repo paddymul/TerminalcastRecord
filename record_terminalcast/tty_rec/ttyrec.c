@@ -54,6 +54,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <libc.h>
+
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
 
 #if defined(SVR4)
 #include <fcntl.h>
@@ -91,6 +96,7 @@ void getmaster(void);
 void getslave(void);
 void doinput(void);
 void dooutput(void);
+void write_window_size(int);
 void doshell(const char*);
 
 char	*shell;
@@ -173,6 +179,10 @@ main(argc, argv)
 	fixtty();
 
 	(void) signal(SIGCHLD, finish);
+	(void) fprintf(fscripttime, "var timing=[");
+        (void) signal(SIGWINCH, write_window_size);
+        (void) write_window_size(0);
+
 	child = fork();
 	if (child < 0) {
 		perror("fork");
@@ -184,14 +194,98 @@ main(argc, argv)
 			perror("fork");
 			fail();
 		}
-		if (child)
-			dooutput();
-		else
-			doshell(command);
+		if (child){
+                  //(void) signal(SIGWINCH, write_window_size);
+                  dooutput();
+		}
+                else{
+                  doshell(command);
+                }
 	}
 	doinput();
 	return 0;
 }
+
+
+void
+write_window_size(int sig) {
+  //fprintf(temp_file,"\nInterrupted..\n");
+  //    fclose(temp_file);
+  
+  struct winsize ws;
+   int fd=open("/dev/tty",O_RDWR);
+
+   if (ioctl(fd,TIOCGWINSZ,&ws)!=0) {
+      perror("ioctl(/dev/tty,TIOCGWINSZ)");
+      exit(sig);
+
+   }
+  
+   char term_esc_seq[500];
+   //
+   int len = sprintf(term_esc_seq, "\033[8;%i;%it",  ws.ws_row, ws.ws_col);
+   //int len = sprintf(term_esc_seq,"\033[8;24;80t"); // sprintf(term_esc_seq, '\033[8;%i;%it', 50,50);
+   //printf("%i", len);
+   //puts(len);
+   //(void) fprintf(fscripttime, "var timing=[");
+   write_event(term_esc_seq, len);
+  //printf('\033[8;24;80t'); // sprintf(term_esc_seq, '\033[8;%i;%it', 50,50);
+  //printf(" %i,%i",ws.ws_col, ws.ws_row);
+  //printf(" %i,%i",50,80);
+  // puts(" ");
+  // 
+}
+
+void 
+write_event(void *buf, int cc)
+{
+  Header h;
+  h.len = cc;
+  gettimeofday(&h.tv, NULL);
+  (void) fwrite(buf, 1, cc, fscript);
+  (void) fprintf(fscripttime, "[%i,%i,%i],", h.tv.tv_sec, h.tv.tv_usec, cc);
+
+}
+
+
+void
+dooutput()
+{
+	int cc;
+	char obuf[BUFSIZ];
+	char tbuf[BUFSIZ];
+
+	setbuf(stdout, NULL);
+	(void) close(0);
+#ifdef HAVE_openpty
+	(void) close(slave);
+#endif
+
+	for (;;) {
+
+
+		cc = read(master, obuf, BUFSIZ);
+		if (cc <= 0)
+			break;
+		if (uflg)
+		    check_output(obuf, cc);
+
+
+                (void) write(1, obuf, cc); // it looks like this line echoes whatever we read to stdout
+
+                (void) write_event(obuf,cc);
+                //Header h;
+		//h.len = cc;
+		//gettimeofday(&h.tv, NULL);
+		//		(void) write_header(fscript, &h);
+                
+		//(void) fwrite(obuf, 1, cc, fscript);
+		//(void) fprintf(fscripttime, "[%i,%i,%i],", h.tv.tv_sec, h.tv.tv_usec, cc);
+	}
+
+	done();
+}
+
 
 void
 doinput()
@@ -287,38 +381,6 @@ check_output(const char *str, int len)
     }
 }
 
-void
-dooutput()
-{
-	int cc;
-	char obuf[BUFSIZ];
-	char tbuf[BUFSIZ];
-
-	setbuf(stdout, NULL);
-	(void) close(0);
-#ifdef HAVE_openpty
-	(void) close(slave);
-#endif
-	(void) fprintf(fscripttime, "var timing=[");
-	for (;;) {
-		Header h;
-
-		cc = read(master, obuf, BUFSIZ);
-		if (cc <= 0)
-			break;
-		if (uflg)
-		    check_output(obuf, cc);
-		h.len = cc;
-		gettimeofday(&h.tv, NULL);
-				(void) write(1, obuf, cc);
-		//		(void) write_header(fscript, &h);
-
-		(void) fwrite(obuf, 1, cc, fscript);
-		(void) fprintf(fscripttime, "[%i,%i,%i],", h.tv.tv_sec, h.tv.tv_usec, cc);
-	}
-
-	done();
-}
 
 void
 doshell(const char* command)
