@@ -11,9 +11,9 @@
                      (window-list 
                       (car 
                        (remove-if
-                        '(lambda (frm)
+                        '(lambda (frm)n
                            (eq (frame-selected-window frm) (selected-window)))
-                        (frame-list)))))) 
+                        (frame-list))))))
                 (point))))
 
 ;             (message (point))))
