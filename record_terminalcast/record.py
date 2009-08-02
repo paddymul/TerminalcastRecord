@@ -110,7 +110,7 @@ def record(
     password='',
     title='',
     description='',
-    tag_list=''
+    tag_list='asdfss'
     ):
     "Usage : prog  "
     for required in [username,password,title,description]:
