@@ -6,12 +6,14 @@ from zipfile import ZipFile
 import time
 import httplib, mimetypes, mimetools, urllib2, cookielib
 import optfunc
-
+import cPickle
+import posixpath
 
 cj = cookielib.CookieJar()
 opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 urllib2.install_opener(opener)
 
+TC_DIR = "~/.terminalcast/"
 TC_HOST = 'localhost:8000'
 
 
@@ -56,7 +58,53 @@ def encode_multipart_formdata(fields, files):
 
 def get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+class TerminalCast(object):
+    def __init__(self, opt_dict={}, zip_file=False):
+        pass
     
+    def dele(self):
+        
+        for f in [tcast_file, tcast_timing, tcast_sound, tcast_ogg, tcast_mp3]:
+            print f
+            try:  
+                os.remove(f)
+            except:
+                print "file probably didn't exist"
+
+
+def get_empty_directory():
+    terminalcast_dir = os.path.expanduser(TC_DIR)
+    try:
+        os.mkdir(terminalcast_dir)
+    except:
+        pass
+    for i in range(1,1000):
+        terminalcast_dir = os.path.expanduser("%s%d" % (TC_DIR, i))
+        
+        if posixpath.exists(terminalcast_dir):
+            continue
+        else:
+            os.mkdir(terminalcast_dir)
+            return terminalcast_dir
+def ls():
+    print "LS"
+    import pdb
+    #pdb.set_trace()
+        
+    for i in range(1,1000):
+        terminalcast_dir = os.path.expanduser("%s%d" % (TC_DIR, i))
+        if posixpath.exists(terminalcast_dir):
+            tcast_desc = "%s/desc.pckl" % terminalcast_dir
+            try:
+                description_dict = cPickle.load(open(tcast_desc))
+                print i
+                print description_dict
+                print "-"*80
+
+            except EOFError, AttributeError:
+                print "error"
+
 def record(
     username='',
     password='',
@@ -65,12 +113,11 @@ def record(
     tag_list=''
     ):
     "Usage : prog  "
-    for required in [username,password,title,description, tag_list]:
+    for required in [username,password,title,description]:
         if required == '':
             print "missing option  try -h to list options "
             return
 
-    sig_time = 1
               
     # Okay, let's do this the hard way: create two unnamed
     # pipes for stdout/err. Then, fork this process, and the
@@ -78,25 +125,17 @@ def record(
     # onto the pipes, while the parent waits for the child to die.
               
     # Create two named pipes
-              
-    terminalcast_dir = os.path.expanduser("~/.terminalcast")
-    try:      
-        os.mkdir(terminalcast_dir)
-    except:   
-        pass  
-              
+    terminalcast_dir = get_empty_directory()
     tcast_file = "%s/tcast_data" % terminalcast_dir
     tcast_timing = "%s/timing.js" % terminalcast_dir
     tcast_sound = "%s/sound.wav" % terminalcast_dir
     tcast_mp3 = "%s/sound.mp3" % terminalcast_dir
     tcast_ogg = "%s/sound.ogg" % terminalcast_dir
     tcast_zip = "%s/tc.zip" % terminalcast_dir
-    for f in [tcast_file, tcast_timing, tcast_sound, tcast_ogg, tcast_mp3]:
-        print f
-        try:  
-            os.remove(f)
-        except:
-            print "file probably didn't exist"
+    tcast_desc = "%s/desc.pckl" % terminalcast_dir
+    description_dict = dict(
+        title=title, description=description, tag_list=tag_list)
+    cPickle.dump(description_dict, open(tcast_desc,"w"))
 
     child_out_r, child_out_w = os.pipe()
     child_err_r, child_err_w = os.pipe()
@@ -135,33 +174,46 @@ def record(
     os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
     #os.system("oggenc2 -q2 --resample 10000 foo.wav -o fooq2-10k.ogg")
     os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
+
     zf = ZipFile( tcast_zip ,'w')
     zf.write(tcast_file, "tcast_data")
     zf.write(tcast_timing, "timing.js")
     zf.write(tcast_ogg, "tcast_sound.ogg")
     zf.write(tcast_mp3, "tcast_sound.mp3")
     zf.close ()
-              
+    upload_terminalcast(tcast_zip, description_dict, username, password)
+
+
+def upload(number='', username='', password=''):
+    for required in [number,username,password]:
+        if required == '':
+            print "missing option  try -h to list options "
+            return
+    number=int(number)
+    terminalcast_dir = os.path.expanduser("%s%d/" % (TC_DIR, number))
+    tcast_zip = "%s/tc.zip" % terminalcast_dir
+    tcast_desc = "%s/desc.pckl" % terminalcast_dir
+    description_dict = cPickle.load(open(tcast_desc))
+    upload_terminalcast(tcast_zip, description_dict, username, password)
+
+
+
+    
+def upload_terminalcast(tcast_zip, tcast_desc, username,password):
     a=post_multipart(
         TC_HOST,
         '/terminalcast/add_login/',
         [('username',username),
          ('password',password),
-         ('title',title),
-         ('description',description),
-         ('tag_list',tag_list)],
+         ('title',tcast_desc['title']),
+         ('description',tcast_desc['description']),
+         ('tag_list',tcast_desc['tag_list'])],
         [(    
             "zip_file",
             tcast_zip,
             open(tcast_zip).read())])
 
-def dispatcher(
-    upload=False,
-    record=True):
-    if upload:
-        optfunc.run(record)
-    else:
-        print "this is where you would record a terminalcast"
 if __name__ == '__main__':
-    #optfunc.run(record)b
-    optfunc.main([dispatcher,record])
+    #optfunc.main([upload_saved_terminalcast,record])
+    optfunc.main([upload,ls,record])
+    #optfunc.main(record)
