@@ -90,6 +90,8 @@ def get_empty_directory():
 def ls():
     print "LS"
     import pdb
+    print __file__
+    #os.system("%s/tty_rec/ttyrec " % __file__)
     #pdb.set_trace()
         
     for i in range(1,1000):
@@ -146,7 +148,8 @@ def record(
     if (child_pid != 0):
         # We're the parent
               
-        os.system("tty_rec/ttyrec %s %s" % (tcast_file, tcast_timing))
+        #os.system("tty_rec/ttyrec %s %s" % (tcast_file, tcast_timing))
+        os.system("ttyrec %s %s" % (tcast_file, tcast_timing))
               
         os.kill (child_pid, signal.SIGTERM)
         print "called os kill"
@@ -212,8 +215,11 @@ def upload_terminalcast(tcast_zip, tcast_desc, username,password):
             "zip_file",
             tcast_zip,
             open(tcast_zip).read())])
-
-if __name__ == '__main__':
-    #optfunc.main([upload_saved_terminalcast,record])
+def my_main():
     optfunc.main([upload,ls,record])
+if __name__ == '__main__':
+    my_main()
+    
+    #optfunc.main([upload_saved_terminalcast,record])
+    #optfunc.main([upload,ls,record])
     #optfunc.main(record)
