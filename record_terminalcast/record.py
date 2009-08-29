@@ -14,7 +14,8 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 urllib2.install_opener(opener)
 
 TC_DIR = "~/.terminalcast/"
-TC_HOST = 'localhost:8000'
+#TC_HOST = 'localhost:8000'
+TC_HOST = 'lispnyc.org:8003'
 
 
 def post_multipart(host, selector, fields, files):
