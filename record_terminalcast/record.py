@@ -15,7 +15,8 @@ urllib2.install_opener(opener)
 
 TC_DIR = "~/.terminalcast/"
 #TC_HOST = 'localhost:8000'
-TC_HOST = 'lispnyc.org:8003'
+#TC_HOST = 'lispnyc.org:8003'
+TC_HOST = 'terminalcast.paddymullen.com'
 
 
 def post_multipart(host, selector, fields, files):
