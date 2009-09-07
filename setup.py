@@ -1,4 +1,6 @@
-
+"""
+Copyright Patrick Mullen 2009
+"""
 __author__="Paddy Mullen"
 __date__ ="$May 14/2009"
 

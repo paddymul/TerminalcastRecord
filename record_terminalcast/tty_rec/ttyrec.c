@@ -38,6 +38,11 @@
 /* 2000-12-27 Satoru Takabayashi <satoru@namazu.org>
  * - modify `script' to create `ttyrec'.
  */
+/*
+
+ 2009 -  Patrick Mullen <paddy@chartwidget.com 
+ modify ttyrec to handle signwich and output timing information to a separate file
+ */
 
 /*
  * script

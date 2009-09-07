@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#Copyright Patrick Mullen 2009
 import os
 import sys
 import signal
@@ -14,7 +15,7 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 urllib2.install_opener(opener)
 
 TC_DIR = "~/.terminalcast/"
-#TC_HOST = 'localhost:8000'
+LOCAL_TC_HOST = 'localhost:8000'
 #TC_HOST = 'lispnyc.org:8003'
 TC_HOST = 'terminalcast.paddymullen.com'
 
@@ -189,7 +190,9 @@ def record(
     upload_terminalcast(tcast_zip, description_dict, username, password)
 
 
-def upload(number='', username='', password=''):
+def upload(number='', username='', password='', host=TC_HOST):
+    if not host == TC_HOST:
+        host = LOCAL_TC_HOST
     for required in [number,username,password]:
         if required == '':
             print "missing option  try -h to list options "
@@ -199,14 +202,15 @@ def upload(number='', username='', password=''):
     tcast_zip = "%s/tc.zip" % terminalcast_dir
     tcast_desc = "%s/desc.pckl" % terminalcast_dir
     description_dict = cPickle.load(open(tcast_desc))
-    upload_terminalcast(tcast_zip, description_dict, username, password)
+    upload_terminalcast(tcast_zip, description_dict, username, password, host=host)
 
 
 
     
-def upload_terminalcast(tcast_zip, tcast_desc, username,password):
+def upload_terminalcast(tcast_zip, tcast_desc, username,password, host=TC_HOST):
+    print "host", host
     a=post_multipart(
-        TC_HOST,
+        host,
         '/terminalcast/add_login/',
         [('username',username),
          ('password',password),

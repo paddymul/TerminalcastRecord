@@ -1,3 +1,4 @@
+Copyright Patrick Mullen 2009
 
 This is the recorder for terminalcast
 getting this to run on other platform , hell even OS X will be tricky, primarily because of sound recording.
