@@ -102,6 +102,7 @@ void getslave(void);
 void doinput(void);
 void dooutput(void);
 void write_window_size(int);
+void write_window_size_handler(int);
 void doshell(const char*);
 
 char	*shell;
@@ -185,8 +186,8 @@ main(argc, argv)
 
 	(void) signal(SIGCHLD, finish);
 	(void) fprintf(fscripttime, "var timing=[");
-        (void) signal(SIGWINCH, write_window_size);
-        (void) write_window_size(0);
+
+
 
 	child = fork();
 	if (child < 0) {
@@ -201,6 +202,8 @@ main(argc, argv)
 		}
 		if (child){
                   //(void) signal(SIGWINCH, write_window_size);
+                  //(void) signal(SIGWINCH, write_window_size_handler);
+                  (void) write_window_size(0);
                   dooutput();
 		}
                 else{
@@ -214,9 +217,6 @@ main(argc, argv)
 
 void
 write_window_size(int sig) {
-  //fprintf(temp_file,"\nInterrupted..\n");
-  //    fclose(temp_file);
-  
   struct winsize ws;
    int fd=open("/dev/tty",O_RDWR);
 
@@ -228,18 +228,27 @@ write_window_size(int sig) {
   
    char term_esc_seq[500];
    //
-   int len = sprintf(term_esc_seq, "\033[8;%i;%it",  ws.ws_row, ws.ws_col);
-   //int len = sprintf(term_esc_seq,"\033[8;24;80t"); // sprintf(term_esc_seq, '\033[8;%i;%it', 50,50);
-   //printf("%i", len);
-   //puts(len);
-   //(void) fprintf(fscripttime, "var timing=[");
+   int len = sprintf(term_esc_seq, "\033[8;%i;%it window_size",  ws.ws_row, ws.ws_col);
    write_event(term_esc_seq, len);
-  //printf('\033[8;24;80t'); // sprintf(term_esc_seq, '\033[8;%i;%it', 50,50);
-  //printf(" %i,%i",ws.ws_col, ws.ws_row);
-  //printf(" %i,%i",50,80);
-  // puts(" ");
-  // 
 }
+void
+write_window_size_handler(int sig) {
+  struct winsize ws;
+   int fd=open("/dev/tty",O_RDWR);
+
+   if (ioctl(fd,TIOCGWINSZ,&ws)!=0) {
+      perror("ioctl(/dev/tty,TIOCGWINSZ)");
+      exit(sig);
+
+   }
+  
+   char term_esc_seq[500];
+   //
+   int len = sprintf(term_esc_seq, "\033[8;%i;%it write_window_size_handler",  ws.ws_row, ws.ws_col);
+   write_event(term_esc_seq, len);
+}
+
+int first_millisecond = 0;
 
 void 
 write_event(void *buf, int cc)
@@ -247,9 +256,17 @@ write_event(void *buf, int cc)
   Header h;
   h.len = cc;
   gettimeofday(&h.tv, NULL);
+  int epoch_milliseconds = h.tv.tv_sec* 1000 +  h.tv.tv_usec/1000;
+  if(first_millisecond == 0 ){
+    first_millisecond = epoch_milliseconds;
+  }
+  
+  int diff_milliseconds = epoch_milliseconds - first_millisecond;
+  (void) fprintf(fscripttime, "[%i,%i],", diff_milliseconds,cc);
+  (void) fprintf(fscripttime, "\n");
   (void) fwrite(buf, 1, cc, fscript);
-  (void) fprintf(fscripttime, "[%i,%i,%i],", h.tv.tv_sec, h.tv.tv_usec, cc);
-
+  (void) fprintf(fscript, "%c",  254);
+  //(void) fprintf(fscript, "\"],");
 }
 
 
@@ -279,13 +296,6 @@ dooutput()
                 (void) write(1, obuf, cc); // it looks like this line echoes whatever we read to stdout
 
                 (void) write_event(obuf,cc);
-                //Header h;
-		//h.len = cc;
-		//gettimeofday(&h.tv, NULL);
-		//		(void) write_header(fscript, &h);
-                
-		//(void) fwrite(obuf, 1, cc, fscript);
-		//(void) fprintf(fscripttime, "[%i,%i,%i],", h.tv.tv_sec, h.tv.tv_usec, cc);
 	}
 
 	done();

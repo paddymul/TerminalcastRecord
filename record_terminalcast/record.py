@@ -17,7 +17,8 @@ urllib2.install_opener(opener)
 TC_DIR = "~/.terminalcast/"
 LOCAL_TC_HOST = 'localhost:8000'
 #TC_HOST = 'lispnyc.org:8003'
-TC_HOST = 'terminalcast.paddymullen.com'
+#TC_HOST = 'terminalcast.paddymullen.com'
+TC_HOST = 'terminalcast.com'
 
 
 def post_multipart(host, selector, fields, files):
@@ -152,6 +153,7 @@ def record(
         # We're the parent
               
         #os.system("tty_rec/ttyrec %s %s" % (tcast_file, tcast_timing))
+        #os.system("touch %s " % tcast_timing
         os.system("ttyrec %s %s" % (tcast_file, tcast_timing))
               
         os.kill (child_pid, signal.SIGTERM)
