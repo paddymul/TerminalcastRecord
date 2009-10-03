@@ -20,6 +20,19 @@ LOCAL_TC_HOST = 'localhost:8000'
 #TC_HOST = 'terminalcast.paddymullen.com'
 TC_HOST = 'terminalcast.com'
 
+class SoundRecorders(object):
+    @staticmethod
+    def jack(tcast_sound):
+        cmd="/usr/local/bin/ecasound"
+        args="ecasound -i jack,system -o %s" % tcast_sound
+        os.execl (cmd, *args.split(" "))
+
+    @staticmethod
+    def mac_afrecord(tcast_sound):
+        cmd="/usr/bin/sound_recorders/afrecord"
+        args="afrecord -d LEI16 -f WAVE %s" % tcast_sound
+        os.execl (cmd, *args.split(" "))
+SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
 
 def post_multipart(host, selector, fields, files):
     """
@@ -152,8 +165,8 @@ def record(
     if (child_pid != 0):
         # We're the parent
               
-        #os.system("tty_rec/ttyrec %s %s" % (tcast_file, tcast_timing))
-        #os.system("touch %s " % tcast_timing
+        #this works because in setup.py we copy ttyrec to /usr/bin
+        #bad form I know, I'm not quite sure of a better way
         os.system("ttyrec %s %s" % (tcast_file, tcast_timing))
               
         os.kill (child_pid, signal.SIGTERM)
@@ -174,8 +187,7 @@ def record(
     else:     
         # We're the child
         os.setpgid(0, 0) # now the child is it's group leader (?)
-        cmd="/usr/local/bin/ecasound"
-        args="ecasound -i jack,system -o %s" % tcast_sound
+        SOUND_RECORDING_FUNC(tcast_sound)
         os.execl (cmd, *args.split(" "))
     print "done"
               

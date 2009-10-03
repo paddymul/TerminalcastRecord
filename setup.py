@@ -10,6 +10,8 @@ import pdb
 #pdb.set_trace()
 import os
 os.system("cp record_terminalcast/tty_rec/ttyrec /usr/bin")
+os.system("mkdir  /usr/bin/sound_recorders")
+os.system("cp record_terminalcast/sound_recorders/* /usr/bin/sound_recorders")
 setup(name='terminalcast_record',
       version='1.0',
       description='record a terminal session',
@@ -20,5 +22,8 @@ setup(name='terminalcast_record',
           'console_scripts':[
               'rec_tcast = record_terminalcast.record:my_main']},
       #data_files=["record_terminalcast/tty_rec/ttyrec"],
-      packages=['record_terminalcast','record_terminalcast.tty_rec']
+      #packages=['record_terminalcast','record_terminalcast.tty_rec']
+      packages=['record_terminalcast',
+                'record_terminalcast.tty_rec',
+                'record_terminalcast.sound_recorders']
      )

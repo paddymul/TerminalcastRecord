@@ -1,2 +1,22 @@
+# ignore compiled python files
 *.pyc
+
+# ignore server cache tmpresults.pckl files
+tmpresults.pckl
+
+# ignore .ropeproject dirs
+.ropeproject/
+
+# ignore target dirs from maven projects
+target/
+
+
+# ignore emacs temp files
+*~
+*\#*
+
+*nohup.out
+
+#ignore memo_pckl files
+*.memo_pckl
 *.o
