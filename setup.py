@@ -9,8 +9,7 @@ from setuptools import setup, find_packages
 import pdb
 #pdb.set_trace()
 import os
-os.system("cd record_terminalcast/tty_rec/ttyrec ; gcc ttyrec ; cd ../../")
-
+os.system("cd record_terminalcast/tty_rec ; gcc ttyrec.c ; cd ../../ ")
 
 os.system("cp record_terminalcast/tty_rec/ttyrec /usr/bin")
 os.system("cd  record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools; xcodebuild")
