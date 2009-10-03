@@ -44,6 +44,7 @@
 #include "AFToolsCommon.h"
 #include "CAFilePathUtils.h"
 #include "CAAudioFileFormats.h"
+#include <sys/signal.h>
 
 static void usage()
 {
@@ -105,18 +106,37 @@ static int	ParseInt(const char *arg, const char *name)
 	return x;
 }
 
-static void Record(CAAudioFileRecorder &recorder)
+static void Record(CAAudioFileRecorder &local_recorder)
 {
-	recorder.Start();
+	local_recorder.Start();
 	printf("Recording, press any key to stop:");
 	fflush(stdout);
 	getchar();
 	//sleep(10);
-	recorder.Stop();
+	local_recorder.Stop();
 }
+
+ //CAAudioFileRecorder global_recorder;
+//CAAudioFileRecorder &global_recorder;
+const int kNumberBuffers = 3;
+const unsigned kBufferSize = 0x8000;
+//RawAudioFormat* gRawAudioFormat = new RawAudioFormat();
+//CAAudioFileRecorder recorder(kNumberBuffers, kBufferSize);
+CAAudioFileRecorder recorder = CAAudioFileRecorder(kNumberBuffers, kBufferSize);
+ void finish(int signal)
+{
+	fprintf(stderr,
+                "sigterm called");
+        
+        recorder.Stop();
+        exit(0);
+
+}
+
 
 int main(int argc, const char *argv[])
 {
+ signal(SIGTERM, finish);
 	const char *recordFileName = NULL;
 
 	// set up defaults
@@ -193,9 +213,8 @@ int main(int argc, const char *argv[])
 		dataFormat.mChannelsPerFrame = 2;
 	
 	try {
-		const int kNumberBuffers = 3;
-		const unsigned kBufferSize = 0x8000;
-		CAAudioFileRecorder recorder(kNumberBuffers, kBufferSize);
+
+		//global_recorder = recorder;
 		FSRef parentDir;
 		CFStringRef filename;
 		XThrowIfError(PosixPathToParentFSRefAndName(recordFileName, parentDir, filename), "couldn't find output directory");
@@ -206,7 +225,7 @@ int main(int argc, const char *argv[])
 			recfile.SetConverterProperty(kAudioConverterEncodeBitRate, sizeof(UInt32), &bitrate);
 		if (quality >= 0)
 			recfile.SetConverterProperty(kAudioConverterCodecQuality, sizeof(UInt32), &quality);
-
+                //(void) signal(SIGTERM, finish);
 		Record(recorder);
 	}
 	catch (CAXException &e) {
@@ -216,6 +235,7 @@ int main(int argc, const char *argv[])
 	}
 	catch (...) {
 		fprintf(stderr, "An unknown error occurred\n");
+                recorder.Stop();
 		return 1;
 	}
 	return 0;
