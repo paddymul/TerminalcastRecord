@@ -1,0 +1,20 @@
+ulaw doesn't work with lame
+ ~/TerminalcastRecord/record_terminalcast/soundrecorders (master) $ ./afrecord -f WAVE -d ulaw foo.wav
+Recording, press any key to stop:
+ ~/TerminalcastRecord/record_terminalcast/soundrecorders (master) $ lame -V 9 foo.wav ulaw.mp3
+Unsupported data format: 0x0007
+
+alaw doesn't work
+./afrecord -f WAVE -d alaw alaw.wav ; lame -V 9 alaw.wav alaw.mp3
+Recording, press any key to stop:
+Unsupported data format: 0x0006
+
+LEI32 seems to work for lame but not for ogg
+oggenc -q2 --resample 10000 LEI32.wav -o LEI32.ogg
+Skipping chunk of type "FLLR", length 4044
+ERROR: Wav file is unsupported subformat (must be 8,16, or 24 bit PCM
+or floating point PCM)
+ERROR: Input file "LEI32.wav" is not a supported format
+
+LEI24 works
+./afrecord -f WAVE -d LEI24 LEI24.wav ; lame -V 9 LEI24.wav LEI24.mp3 ; oggenc -q2 --resample 10000 LEI24.wav -o LEI24.ogg
