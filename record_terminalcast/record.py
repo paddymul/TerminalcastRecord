@@ -10,10 +10,6 @@ import optfunc
 import cPickle
 import posixpath
 
-cj = cookielib.CookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-urllib2.install_opener(opener)
-
 TC_DIR = "~/.terminalcast/"
 LOCAL_TC_HOST = 'localhost:8000'
 #TC_HOST = 'lispnyc.org:8003'
@@ -34,62 +30,6 @@ class SoundRecorders(object):
         os.execl (cmd, *args.split(" "))
 SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
 
-def post_multipart(host, selector, fields, files):
-    """
-    Post fields and files to an http host as multipart/form-data.
-    fields is a sequence of (name, value) elements for regular form fields.
-    files is a sequence of (name, filename, value) elements for data to be uploaded as files
-    Return the server's response page.
-    """
-    content_type, body = encode_multipart_formdata(fields, files)
-    headers = {'Content-Type': content_type,
-               'Content-Length': str(len(body))}
-    r = urllib2.Request("http://%s%s" % (host, selector), body, headers)
-    return urllib2.urlopen(r).read()
-
-def encode_multipart_formdata(fields, files):
-    """
-    fields is a sequence of (name, value) elements for regular form fields.
-    files is a sequence of (name, filename, value) elements for data to be uploaded as files
-    Return (content_type, body) ready for httplib.HTTP instance
-    """
-    BOUNDARY = mimetools.choose_boundary()
-    CRLF = '\r\n'
-    L = []
-    for (key, value) in fields:
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"' % key)
-        L.append('')
-        L.append(value)
-    for (key, filename, value) in files:
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-        L.append('Content-Type: %s' % get_content_type(filename))
-        L.append('')
-        L.append(value)
-    L.append('--' + BOUNDARY + '--')
-    L.append('')
-    body = CRLF.join(L)
-    content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
-    return content_type, body
-
-def get_content_type(filename):
-    return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-
-class TerminalCast(object):
-    def __init__(self, opt_dict={}, zip_file=False):
-        pass
-    
-    def dele(self):
-        
-        for f in [tcast_file, tcast_timing, tcast_sound, tcast_ogg, tcast_mp3]:
-            print f
-            try:  
-                os.remove(f)
-            except:
-                print "file probably didn't exist"
-
-
 def get_empty_directory():
     terminalcast_dir = os.path.expanduser(TC_DIR)
     try:
@@ -106,11 +46,6 @@ def get_empty_directory():
             return terminalcast_dir
 def ls():
     print "LS"
-    import pdb
-    print __file__
-    #os.system("%s/tty_rec/ttyrec " % __file__)
-    #pdb.set_trace()
-        
     for i in range(1,1000):
         terminalcast_dir = os.path.expanduser("%s%d" % (TC_DIR, i))
         if posixpath.exists(terminalcast_dir):
@@ -203,7 +138,7 @@ def record(
     zf.close ()
     upload_terminalcast(tcast_zip, description_dict, username, password)
 
-
+from  upload import upload_terminalcast
 def upload(number='', username='', password='', host=TC_HOST):
     if not host == TC_HOST:
         host = LOCAL_TC_HOST
@@ -218,25 +153,9 @@ def upload(number='', username='', password='', host=TC_HOST):
     description_dict = cPickle.load(open(tcast_desc))
     upload_terminalcast(tcast_zip, description_dict, username, password, host=host)
 
-
-
-    
-def upload_terminalcast(tcast_zip, tcast_desc, username,password, host=TC_HOST):
-    print "host", host
-    a=post_multipart(
-        host,
-        '/terminalcast/add_login/',
-        [('username',username),
-         ('password',password),
-         ('title',tcast_desc['title']),
-         ('description',tcast_desc['description']),
-         ('tag_list',tcast_desc['tag_list'])],
-        [(    
-            "zip_file",
-            tcast_zip,
-            open(tcast_zip).read())])
 def my_main():
     optfunc.main([upload,ls,record])
+
 if __name__ == '__main__':
     my_main()
     
