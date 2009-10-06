@@ -59,7 +59,8 @@ class SoundRecorders(object):
         #os.execl (cmd, *args.split(" "))
         os.system("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound)
         print " afrecord finished "
-SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
+        
+SOUND_RECORDING_FUNC = SoundRecorders.jack
 
 def record(
     username='',    password='',    title='',
@@ -103,7 +104,7 @@ def record(
         print "called os kill on %d " %  child_pid
         os.system("kill %d" % child_pid)
         print "called os kill on %d " %  child_pid
-        """
+
         os.kill (child_pid, signal.SIGTERM)
         print "called os kill on %d " %  child_pid
         
@@ -117,7 +118,7 @@ def record(
             # kill it!
             os.kill(child_pid, 9)
             child_status = -1 # timeout
-        """
+
         print "\n\n\n  otherprocess finished \n\n\n"
               
     else:     
