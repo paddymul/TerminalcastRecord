@@ -16,5 +16,5 @@ ERROR: Wav file is unsupported subformat (must be 8,16, or 24 bit PCM
 or floating point PCM)
 ERROR: Input file "LEI32.wav" is not a supported format
 
-LEI24 works
+LEI24 works --kinda
 ./afrecord -f WAVE -d LEI24 LEI24.wav ; lame -V 9 LEI24.wav LEI24.mp3 ; oggenc -q2 --resample 10000 LEI24.wav -o LEI24.ogg

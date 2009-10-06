@@ -16,20 +16,6 @@ LOCAL_TC_HOST = 'localhost:8000'
 #TC_HOST = 'terminalcast.paddymullen.com'
 TC_HOST = 'terminalcast.com'
 
-class SoundRecorders(object):
-    @staticmethod
-    def jack(tcast_sound):
-        cmd="/usr/local/bin/ecasound"
-        args="ecasound -i jack,system -o %s" % tcast_sound
-        os.execl (cmd, *args.split(" "))
-
-    @staticmethod
-    def mac_afrecord(tcast_sound):
-        cmd="/usr/bin/sound_recorders/afrecord"
-        args="afrecord -d LEI16 -f WAVE %s" % tcast_sound
-        os.execl (cmd, *args.split(" "))
-SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
-
 def get_empty_directory():
     terminalcast_dir = os.path.expanduser(TC_DIR)
     try:
@@ -59,19 +45,30 @@ def ls():
             except EOFError, AttributeError:
                 print "error"
 
+class SoundRecorders(object):
+    @staticmethod
+    def jack(tcast_sound):
+        cmd="/usr/local/bin/ecasound"
+        args="ecasound -i jack,system -o %s" % tcast_sound
+        os.execl (cmd, *args.split(" "))
+
+    @staticmethod
+    def mac_afrecord(tcast_sound):
+        cmd="/usr/bin/sound_recorders/afrecord"
+        args="afrecord -d LEI16 -f WAVE %s" % tcast_sound
+        #os.execl (cmd, *args.split(" "))
+        os.system("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound)
+        print " afrecord finished "
+SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
+
 def record(
-    username='',
-    password='',
-    title='',
-    description='',
-    tag_list='asdfss'
-    ):
+    username='',    password='',    title='',
+    description='',    tag_list='asdfss'    ):
     "Usage : prog  "
     for required in [username,password,title,description]:
         if required == '':
             print "missing option  try -h to list options "
             return
-
               
     # Okay, let's do this the hard way: create two unnamed
     # pipes for stdout/err. Then, fork this process, and the
@@ -103,10 +100,13 @@ def record(
         #this works because in setup.py we copy ttyrec to /usr/bin
         #bad form I know, I'm not quite sure of a better way
         os.system("ttyrec %s %s" % (tcast_file, tcast_timing))
-              
+        print "called os kill on %d " %  child_pid
+        os.system("kill %d" % child_pid)
+        print "called os kill on %d " %  child_pid
+        """
         os.kill (child_pid, signal.SIGTERM)
-        print "called os kill"
-              
+        print "called os kill on %d " %  child_pid
+        
         try:  
             child_pid, child_status = os.waitpid(child_pid, 0); # wait forchild
         except OSError:
@@ -117,13 +117,13 @@ def record(
             # kill it!
             os.kill(child_pid, 9)
             child_status = -1 # timeout
+        """
         print "\n\n\n  otherprocess finished \n\n\n"
               
     else:     
         # We're the child
         os.setpgid(0, 0) # now the child is it's group leader (?)
         SOUND_RECORDING_FUNC(tcast_sound)
-        os.execl (cmd, *args.split(" "))
     print "done"
               
     os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
@@ -136,7 +136,7 @@ def record(
     zf.write(tcast_ogg, "tcast_sound.ogg")
     zf.write(tcast_mp3, "tcast_sound.mp3")
     zf.close ()
-    upload_terminalcast(tcast_zip, description_dict, username, password)
+    upload_terminalcast(tcast_zip, description_dict, username, password, host=TC_HOST)
 
 from  upload import upload_terminalcast
 def upload(number='', username='', password='', host=TC_HOST):
