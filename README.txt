@@ -6,17 +6,11 @@ getting this to run on other platform , hell even OS X will be tricky, primarily
 
 on OS X  this currently works
 
-
-get JACK
-http://www.jackosx.com
-
+You must have developer tools installed 
 
 sudo port install lame
-sudo port install ecasound
 sudo port install vorbis-tools
-wget http://ecasound.seul.org/download/ecasound-2.6.0.tar.gz
-tar xzvf ecasound-2.6.0.tar.gz 
-cd ecasound-2.6.0
-./configure
-make
-sudo make install
+sudo python setup.py build install
+
+
+I am now using a sound recorder based on CoreAudio so you don't need to install a bunch of external tools
