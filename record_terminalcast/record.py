@@ -55,10 +55,6 @@ class SoundRecorders(object):
 
     @staticmethod
     def mac_afrecord(tcast_sound):
-        """
-        for some reason afrecord won't record anything when executed from a sub process 
-
-        """
         cmd="/usr/bin/sound_recorders/afrecord"
         cmd="/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord"
         args="afrecord -d LEI16 -f WAVE %s" % tcast_sound
@@ -66,6 +62,13 @@ class SoundRecorders(object):
         #        /usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" 
         os.system('bash -c "/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord -d LEI16 -f WAVE %s"' % tcast_sound)
 
+class Afrecord(object):
+
+    def __init__(self, tcast_sound):
+        args = ("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound).split(" ")
+        self.sub_proc = subprocess.Popen(args)
+    def finish(self):
+        self.sub_proc.send_signal(signal.SIGTERM)        
         
         
 SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
@@ -77,7 +80,6 @@ def post_process_sound(tcast_sound, tcast_mp3, tcast_ogg):
     os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
 
 def dummy_rec():
-
     terminalcast_dir = "/Users/patrickmullen/TerminalcastRecord/dummy"
     tcast_file = "%s/tcast_data" % terminalcast_dir
     tcast_timing = "%s/timing.js" % terminalcast_dir
@@ -116,10 +118,8 @@ def record(
     cPickle.dump(description_dict, open(tcast_desc,"w"))
 
 
-    args = ("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound).split(" ")
-    sub_proc = subprocess.Popen(args)
     TCAST_RECORDINGFUNC(tcast_file, tcast_timing)
-    sub_proc.send_signal(signal.SIGTERM)
+
     post_process_sound(tcast_file, tcast_timing)
 
     zf = ZipFile( tcast_zip ,'w')
