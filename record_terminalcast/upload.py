@@ -72,3 +72,4 @@ def upload_terminalcast(tcast_zip, tcast_desc, username,password, host):
             "zip_file",
             tcast_zip,
             open(tcast_zip).read())])
+    print a

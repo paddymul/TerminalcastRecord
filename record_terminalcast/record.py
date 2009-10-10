@@ -75,6 +75,7 @@ def record(
             print "missing option  try -h to list options "
             return
 
+
     terminalcast_dir = get_empty_directory()
     tcast_file = "%s/tcast_data" % terminalcast_dir
     tcast_timing = "%s/timing.js" % terminalcast_dir
@@ -88,10 +89,10 @@ def record(
         title=title, description=description, tag_list=tag_list)
     cPickle.dump(description_dict, open(tcast_desc,"w"))
 
-    sound_recorder = SOUND_RECORDING_CLASS()
+    sound_recorder = SOUND_RECORDING_CLASS(tcast_sound)
     TCAST_RECORDING_FUNC(tcast_file, tcast_timing)
     sound_recorder.finish()
-    post_process_sound(tcast_file, tcast_timing)
+    post_process_sound(tcast_sound, tcast_mp3, tcast_ogg)
 
     zf = ZipFile( tcast_zip ,'w')
     zf.write(tcast_file, "tcast_data")
@@ -115,6 +116,7 @@ def upload(number='', username='', password='', host=TC_HOST):
     description_dict = cPickle.load(open(tcast_desc))
     upload_terminalcast(tcast_zip, description_dict, username, password, host=host)
 
-
-if __name__ == '__main__':
+def my_main():
     optfunc.main([upload,ls,record])
+if __name__ == '__main__':
+    my_main()
