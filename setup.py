@@ -9,13 +9,14 @@ from setuptools import setup, find_packages
 import pdb
 #pdb.set_trace()
 import os
-os.system("cd record_terminalcast/tty_rec ; gcc ttyrec.c ; cd ../../ ")
-
-os.system("cp record_terminalcast/tty_rec/ttyrec /usr/bin")
-os.system("cd  record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools; xcodebuild")
-os.system("cp  record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord  record_terminalcast/sound_recorders/bin/ ")
-os.system("mkdir  /usr/bin/sound_recorders")
-os.system("cp record_terminalcast/sound_recorders/bin/* /usr/bin/sound_recorders")
+def compile_dependencies():
+    os.system("cd record_terminalcast/tty_rec ; gcc ttyrec.c ; cd ../../ ")
+    os.system("cp record_terminalcast/tty_rec/ttyrec /usr/bin")
+    os.system("cd  record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools; xcodebuild")
+    os.system("cp  record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord  record_terminalcast/sound_recorders/bin/ ")
+    os.system("mkdir  /usr/bin/sound_recorders")
+    os.system("cp record_terminalcast/sound_recorders/bin/* /usr/bin/sound_recorders")
+#compile_dependencies()
 setup(name='terminalcast_record',
       version='1.0',
       description='record a terminal session',

@@ -50,17 +50,54 @@ class SoundRecorders(object):
     def jack(tcast_sound):
         cmd="/usr/local/bin/ecasound"
         args="ecasound -i jack,system -o %s" % tcast_sound
-        os.execl (cmd, *args.split(" "))
+        os.execl(cmd, *args.split(" "))
 
     @staticmethod
     def mac_afrecord(tcast_sound):
+        """
+        for some reason afrecord won't record anything when executed from a sub process 
+
+        """
         cmd="/usr/bin/sound_recorders/afrecord"
+        cmd="/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord"
         args="afrecord -d LEI16 -f WAVE %s" % tcast_sound
         #os.execl (cmd, *args.split(" "))
-        os.system("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound)
-        print " afrecord finished "
+        #        /usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" 
+        os.system('bash -c "/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord -d LEI16 -f WAVE %s"' % tcast_sound)
         
-SOUND_RECORDING_FUNC = SoundRecorders.jack
+SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
+def TCAST_RECORDINGFUNC(tcast_file, tcast_timing):
+    os.system("/usr/bin/ttyrec %s %s" % (tcast_file, tcast_timing))
+
+import time
+import subprocess
+def dummy_rec():
+
+    terminalcast_dir = "/Users/patrickmullen/TerminalcastRecord/dummy"
+    tcast_file = "%s/tcast_data" % terminalcast_dir
+    tcast_timing = "%s/timing.js" % terminalcast_dir
+    tcast_sound = "%s/sound.wav" % terminalcast_dir
+    tcast_mp3 = "%s/sound.mp3" % terminalcast_dir
+    tcast_ogg = "%s/sound.ogg" % terminalcast_dir
+    tcast_zip = "%s/tc.zip" % terminalcast_dir
+    tcast_desc = "%s/desc.pckl" % terminalcast_dir
+
+
+    args = ("/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord -d LEI16 -f WAVE %s" % tcast_sound).split(" ")
+    sub_proc = subprocess.Popen(args)
+    TCAST_RECORDINGFUNC(tcast_file, tcast_timing)
+    import pdb
+    #pdb.set_trace()
+    sub_proc.send_signal(signal.SIGTERM)
+        
+    #os.kill (child_pid, signal.SIGTERM)
+    #SOUND_RECORDING_FUNC(tcast_sound)
+    #os.system("kill %d" % child_pid)
+    #print "called os kill on %d " %  child_pid
+    #    time.sleep(5)
+    os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
+    os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
+
 
 def record(
     username='',    password='',    title='',
@@ -155,7 +192,7 @@ def upload(number='', username='', password='', host=TC_HOST):
     upload_terminalcast(tcast_zip, description_dict, username, password, host=host)
 
 def my_main():
-    optfunc.main([upload,ls,record])
+    optfunc.main([upload,ls,record, dummy_rec])
 
 if __name__ == '__main__':
     my_main()
