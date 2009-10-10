@@ -1,14 +1,15 @@
 #!/usr/bin/python
 #Copyright Patrick Mullen 2009
-import os
-import sys
-import signal
-from zipfile import ZipFile
-import time
-import httplib, mimetypes, mimetools, urllib2, cookielib
-import optfunc
 import cPickle
+import os
 import posixpath
+import signal
+import subprocess
+from zipfile import ZipFile
+
+import optfunc
+from  upload import upload_terminalcast
+
 
 TC_DIR = "~/.terminalcast/"
 LOCAL_TC_HOST = 'localhost:8000'
@@ -64,13 +65,17 @@ class SoundRecorders(object):
         #os.execl (cmd, *args.split(" "))
         #        /usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" 
         os.system('bash -c "/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord -d LEI16 -f WAVE %s"' % tcast_sound)
+
+        
         
 SOUND_RECORDING_FUNC = SoundRecorders.mac_afrecord
 def TCAST_RECORDINGFUNC(tcast_file, tcast_timing):
     os.system("/usr/bin/ttyrec %s %s" % (tcast_file, tcast_timing))
 
-import time
-import subprocess
+def post_process_sound(tcast_sound, tcast_mp3, tcast_ogg):
+    os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
+    os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
+
 def dummy_rec():
 
     terminalcast_dir = "/Users/patrickmullen/TerminalcastRecord/dummy"
@@ -81,22 +86,6 @@ def dummy_rec():
     tcast_ogg = "%s/sound.ogg" % terminalcast_dir
     tcast_zip = "%s/tc.zip" % terminalcast_dir
     tcast_desc = "%s/desc.pckl" % terminalcast_dir
-
-
-    args = ("/Users/patrickmullen/TerminalcastRecord/record_terminalcast/sound_recorders/mac_afrecord/AudioFileTools/build/Debug-Tiger+/afrecord -d LEI16 -f WAVE %s" % tcast_sound).split(" ")
-    sub_proc = subprocess.Popen(args)
-    TCAST_RECORDINGFUNC(tcast_file, tcast_timing)
-    import pdb
-    #pdb.set_trace()
-    sub_proc.send_signal(signal.SIGTERM)
-        
-    #os.kill (child_pid, signal.SIGTERM)
-    #SOUND_RECORDING_FUNC(tcast_sound)
-    #os.system("kill %d" % child_pid)
-    #print "called os kill on %d " %  child_pid
-    #    time.sleep(5)
-    os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
-    os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
 
 
 def record(
@@ -126,47 +115,12 @@ def record(
         title=title, description=description, tag_list=tag_list)
     cPickle.dump(description_dict, open(tcast_desc,"w"))
 
-    child_out_r, child_out_w = os.pipe()
-    child_err_r, child_err_w = os.pipe()
-              
-    # Let's fork a child that gets replaced with the test process - krf
-    child_pid = os.fork()
 
-    if (child_pid != 0):
-        # We're the parent
-              
-        #this works because in setup.py we copy ttyrec to /usr/bin
-        #bad form I know, I'm not quite sure of a better way
-        os.system("ttyrec %s %s" % (tcast_file, tcast_timing))
-        print "called os kill on %d " %  child_pid
-        os.system("kill %d" % child_pid)
-        print "called os kill on %d " %  child_pid
-
-        os.kill (child_pid, signal.SIGTERM)
-        print "called os kill on %d " %  child_pid
-        
-        try:  
-            child_pid, child_status = os.waitpid(child_pid, 0); # wait forchild
-        except OSError:
-            print("OSError... did the executable time out?")
-            child_status = -1 # this is the same as a timeout for now
-        except ValueError:
-            print("Timed out")
-            # kill it!
-            os.kill(child_pid, 9)
-            child_status = -1 # timeout
-
-        print "\n\n\n  otherprocess finished \n\n\n"
-              
-    else:     
-        # We're the child
-        os.setpgid(0, 0) # now the child is it's group leader (?)
-        SOUND_RECORDING_FUNC(tcast_sound)
-    print "done"
-              
-    os.system("lame -V 9 %s %s " % (tcast_sound, tcast_mp3))
-    #os.system("oggenc2 -q2 --resample 10000 foo.wav -o fooq2-10k.ogg")
-    os.system("oggenc -q2 --resample 10000 %s -o  %s" % (tcast_sound, tcast_ogg))
+    args = ("/usr/bin/sound_recorders/afrecord -d LEI16 -f WAVE %s" % tcast_sound).split(" ")
+    sub_proc = subprocess.Popen(args)
+    TCAST_RECORDINGFUNC(tcast_file, tcast_timing)
+    sub_proc.send_signal(signal.SIGTERM)
+    post_process_sound(tcast_file, tcast_timing)
 
     zf = ZipFile( tcast_zip ,'w')
     zf.write(tcast_file, "tcast_data")
@@ -176,7 +130,6 @@ def record(
     zf.close ()
     upload_terminalcast(tcast_zip, description_dict, username, password, host=TC_HOST)
 
-from  upload import upload_terminalcast
 def upload(number='', username='', password='', host=TC_HOST):
     if not host == TC_HOST:
         host = LOCAL_TC_HOST
