@@ -117,4 +117,4 @@ def upload(number='', username='', password='', host=TC_HOST):
 
 
 if __name__ == '__main__':
-    optfunc.main([upload,ls,record)
+    optfunc.main([upload,ls,record])
