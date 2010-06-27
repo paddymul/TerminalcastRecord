@@ -771,14 +771,7 @@ static void VTResize(Widget w);
 static void VTInitI18N(XtermWidget);
 #endif
 
-#ifdef VMS
-globaldef {
-    "xtermclassrec"
-} noshare
-
-#else
 static
-#endif				/* VMS */
 WidgetClassRec xtermClassRec =
 {
     {
@@ -818,12 +811,6 @@ WidgetClassRec xtermClassRec =
     }
 };
 
-#ifdef VMS
-globaldef {
-    "xtermwidgetclass"
-}
-noshare
-#endif /* VMS */
 WidgetClass xtermWidgetClass = (WidgetClass) & xtermClassRec;
 
 /*
@@ -3278,17 +3265,10 @@ v_write(int f, Char * data, unsigned len)
     }
 #endif
 
-#ifdef VMS
-    if ((1 << f) != pty_mask) {
-	tt_write((char *) data, len);
-	return;
-    }
-#else /* VMS */
     if (!FD_ISSET(f, &pty_mask)) {
 	IGNORE_RC(write(f, (char *) data, (size_t) len));
 	return;
     }
-#endif /* VMS */
 
     /*
      * Append to the block we already have.
@@ -3363,20 +3343,11 @@ v_write(int f, Char * data, unsigned len)
 #define MAX_PTY_WRITE 128	/* 1/2 POSIX minimum MAX_INPUT */
 
     if (v_bufptr > v_bufstr) {
-#ifdef VMS
-	riten = tt_write(v_bufstr,
-			 ((v_bufptr - v_bufstr <= VMS_TERM_BUFFER_SIZE)
-			  ? v_bufptr - v_bufstr
-			  : VMS_TERM_BUFFER_SIZE));
-	if (riten == 0)
-	    return (riten);
-#else /* VMS */
 	riten = (int) write(f, v_bufstr,
 			    (size_t) ((v_bufptr - v_bufstr <= MAX_PTY_WRITE)
 				      ? v_bufptr - v_bufstr
 				      : MAX_PTY_WRITE));
 	if (riten < 0)
-#endif /* VMS */
 	{
 #ifdef DEBUG
 	    if (debug)
@@ -3421,97 +3392,6 @@ v_write(int f, Char * data, unsigned len)
     }
 }
 
-#ifdef VMS
-#define	ptymask()	(v_bufptr > v_bufstr ? pty_mask : 0)
-
-static void
-in_put(XtermWidget xw)
-{
-    static PtySelect select_mask;
-    static PtySelect write_mask;
-    int update = VTbuffer->update;
-    int size;
-
-    int status;
-    Dimension replyWidth, replyHeight;
-    XtGeometryResult stat;
-
-    TScreen *screen = TScreenOf(xw);
-    char *cp;
-    int i;
-
-    select_mask = pty_mask;	/* force initial read */
-    for (;;) {
-
-	/* if the terminal changed size, resize the widget */
-	if (tt_changed) {
-	    tt_changed = False;
-
-	    stat = REQ_RESIZE((Widget) xw,
-			      ((Dimension) FontWidth(screen)
-			       * (tt_width)
-			       + 2 * screen->border
-			       + screen->fullVwin.sb_info.width),
-			      ((Dimension) FontHeight(screen)
-			       * (tt_length)
-			       + 2 * screen->border),
-			      &replyWidth, &replyHeight);
-
-	    if (stat == XtGeometryYes || stat == XtGeometryDone) {
-		xw->core.width = replyWidth;
-		xw->core.height = replyHeight;
-
-		ScreenResize(xw, replyWidth, replyHeight, &xw->flags);
-	    }
-	    repairSizeHints();
-	}
-
-	if (screen->eventMode == NORMAL
-	    && readPtyData(screen, &select_mask, VTbuffer)) {
-	    if (screen->scrollWidget
-		&& screen->scrollttyoutput
-		&& screen->topline < 0)
-		/* Scroll to bottom */
-		WindowScroll(xw, 0, False);
-	    break;
-	}
-	if (screen->scroll_amt)
-	    FlushScroll(xw);
-	if (screen->cursor_set && CursorMoved(screen)) {
-	    if (screen->cursor_state)
-		HideCursor();
-	    ShowCursor();
-#if OPT_INPUT_METHOD
-	    PreeditPosition(screen);
-#endif
-	} else if (screen->cursor_set != screen->cursor_state) {
-	    if (screen->cursor_set)
-		ShowCursor();
-	    else
-		HideCursor();
-	}
-
-	if (QLength(screen->display)) {
-	    select_mask = X_mask;
-	} else {
-	    write_mask = ptymask();
-	    XFlush(screen->display);
-	    select_mask = Select_mask;
-	    if (screen->eventMode != NORMAL)
-		select_mask = X_mask;
-	}
-	if (write_mask & ptymask()) {
-	    v_write(screen->respond, 0, 0);	/* flush buffer */
-	}
-
-	if (select_mask & X_mask) {
-	    xevents();
-	    if (VTbuffer->update != update)
-		break;
-	}
-    }
-}
-#else /* VMS */
 
 static void
 in_put(XtermWidget xw)
@@ -3668,7 +3548,6 @@ in_put(XtermWidget xw)
 
     }
 }
-#endif /* VMS */
 
 static IChar
 doinput(void)
@@ -5218,11 +5097,7 @@ unparse_end(XtermWidget xw)
     TScreen *screen = TScreenOf(xw);
 
     if (screen->unparse_len) {
-#ifdef VMS
-	tt_write(screen->unparse_bfr, screen->unparse_len);
-#else /* VMS */
 	writePtyData(screen->respond, screen->unparse_bfr, screen->unparse_len);
-#endif /* VMS */
 	screen->unparse_len = 0;
     }
 }

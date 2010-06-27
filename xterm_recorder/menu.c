@@ -824,14 +824,12 @@ HandlePopupMenu(Widget w,
 static void
 handle_send_signal(Widget gw GCC_UNUSED, int sig)
 {
-#ifndef VMS
     TScreen *screen = TScreenOf(term);
 
     if (hold_screen > 1)
 	hold_screen = 0;
     if (screen->pid > 1)
 	kill_process_group(screen->pid, sig);
-#endif
 }
 
 /*

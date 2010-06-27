@@ -282,7 +282,6 @@ ttyslot(void)
 #endif
 
 #ifndef linux
-#ifndef VMS
 #ifndef USE_POSIX_TERMIOS
 #ifndef USE_ANY_SYSV_TERMIO
 #include <sgtty.h>
@@ -296,7 +295,6 @@ ttyslot(void)
 #ifndef __INTERIX
 #define HAS_BSD_GROUPS
 #endif
-#endif /* !VMS */
 #endif /* !linux */
 
 #endif /* __QNX__ */
@@ -447,14 +445,12 @@ extern char *ttyname();
 extern char *ptsname(int);
 #endif
 
-#ifndef VMS
 static SIGNAL_T reapchild(int /* n */ );
 static int spawnXTerm(XtermWidget /* xw */ );
 static void remove_termcap_entry(char *, const char *);
 #ifdef USE_PTY_SEARCH
 static int pty_search(int * /* pty */ );
 #endif
-#endif /* ! VMS */
 
 static int get_pty(int *pty, char *from);
 static void resize_termcap(XtermWidget xw);
@@ -588,7 +584,6 @@ static char **command_to_exec_with_luit = NULL;
 #define ttyFlush(fd)          tcflush(fd, TCOFLUSH)
 #endif /* USE_ANY_SYSV_TERMIO */
 
-#ifndef VMS
 #ifdef TERMIO_STRUCT
 /* The following structures are initialized in main() in order
 ** to eliminate any assumptions about the internal order of their
@@ -629,7 +624,6 @@ static struct jtchars d_jtc =
 };
 #endif /* sony */
 #endif /* TERMIO_STRUCT */
-#endif /* ! VMS */
 
 /*
  * SYSV has the termio.c_cc[V] and ltchars; BSD has tchars and ltchars;
@@ -2072,10 +2066,6 @@ main(int argc, char *argv[]ENVP_ARG)
     /* Parse the rest of the command line */
     TRACE_ARGV("After XtOpenApplication", argv);
     for (argc--, argv++; argc > 0; argc--, argv++) {
-#ifdef VMS
-	if (**argv != '-')
-	    Syntax(*argv);
-#else
 	if (**argv != '-') {
 	    if (argc > 1)
 		Syntax(*argv);
@@ -2083,7 +2073,6 @@ main(int argc, char *argv[]ENVP_ARG)
 		explicit_shname = xtermFindShell(*argv, True);
 	    continue;
 	}
-#endif
 
 	TRACE(("parsing %s\n", argv[0]));
 	switch (argv[0][1]) {
@@ -2287,7 +2276,6 @@ main(int argc, char *argv[]ENVP_ARG)
 
     spawnXTerm(term);
 
-#ifndef VMS
     /* Child process is out there, let's catch its termination */
 
 #ifdef USE_POSIX_SIGNALS
@@ -2304,26 +2292,6 @@ main(int argc, char *argv[]ENVP_ARG)
 	sprintf(buf, "%lx\n", XtWindow(SHELL_OF(CURRENT_EMU())));
 	IGNORE_RC(write(screen->respond, buf, strlen(buf)));
     }
-#ifdef AIXV3
-#if (OSMAJORVERSION < 4)
-    /* In AIXV3, xterms started from /dev/console have CLOCAL set.
-     * This means we need to clear CLOCAL so that SIGHUP gets sent
-     * to the slave-pty process when xterm exits.
-     */
-
-    {
-	TERMIO_STRUCT tio;
-
-	if (ttyGetAttr(screen->respond, &tio) == -1)
-	    SysError(ERROR_TIOCGETP);
-
-	tio.c_cflag &= ~(CLOCAL);
-
-	if (ttySetAttr(screen->respond, &tio) == -1)
-	    SysError(ERROR_TIOCSETP);
-    }
-#endif
-#endif
 #if defined(USE_ANY_SYSV_TERMIO) || defined(__MVS__)
     if (0 > (mode = fcntl(screen->respond, F_GETFL, 0)))
 	SysError(ERROR_F_GETFL);
@@ -2361,7 +2329,6 @@ main(int argc, char *argv[]ENVP_ARG)
 		 ? (1 + ConnectionNumber(screen->display))
 		 : (1 + screen->respond));
 
-#endif /* !VMS */
 #ifdef DEBUG
     if (debug)
 	printf("debugging on\n");
@@ -2507,12 +2474,6 @@ get_pty(int *pty, char *from GCC_UNUSED)
 #endif
 #endif
 
-#elif defined(AIXV3)
-
-    if ((*pty = open("/dev/ptc", O_RDWR)) >= 0) {
-	strcpy(ttydev, ttyname(*pty));
-	result = 0;
-    }
 #elif defined(__convex__)
 
     char *pty_name;
@@ -2901,7 +2862,6 @@ HsSysError(int error)
 }
 #endif /* OPT_PTY_HANDSHAKE else !OPT_PTY_HANDSHAKE */
 
-#ifndef VMS
 static void
 set_owner(char *device, uid_t uid, gid_t gid, mode_t mode)
 {
@@ -4803,7 +4763,6 @@ resize_termcap(XtermWidget xw)
 #endif /* USE_SYSV_ENVVARS */
 }
 
-#endif /* ! VMS */
 
 /*
  * Does a non-blocking wait for a child process.  If the system
@@ -4833,7 +4792,6 @@ nonblocking_wait(void)
     return pid;
 }
 
-#ifndef VMS
 
 /* ARGSUSED */
 static SIGNAL_T
@@ -4865,7 +4823,6 @@ reapchild(int n GCC_UNUSED)
     errno = olderrno;
     SIGNAL_RETURN;
 }
-#endif /* !VMS */
 
 static void
 remove_termcap_entry(char *buf, const char *str)
@@ -4952,7 +4909,6 @@ parse_tty_modes(char *s, struct _xttymodes *modelist)
     }
 }
 
-#ifndef VMS			/* don't use pipes on OpenVMS */
 int
 GetBytesAvailable(int fd)
 {
@@ -4981,7 +4937,6 @@ GetBytesAvailable(int fd)
     return poll(pollfds, 1, 0);
 #endif
 }
-#endif /* !VMS */
 
 /* Utility function to try to hide system differences from
    everybody who used to call killpg() */

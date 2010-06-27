@@ -175,19 +175,6 @@ readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
 {
     int size = 0;
 
-#ifdef VMS
-    if (*select_mask & pty_mask) {
-	trimPtyData(screen, data);
-	if (read_queue.flink != 0) {
-	    size = tt_read(data->next);
-	    if (size == 0) {
-		Panic("input: read returned zero\n", 0);
-	    }
-	} else {
-	    sys$hiber();
-	}
-    }
-#else /* !VMS */
     if (FD_ISSET(screen->respond, select_mask)) {
 	int save_err;
 	trimPtyData(screen, data);
@@ -224,7 +211,6 @@ readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
 	}
 #endif /* f*ugly */
     }
-#endif /* VMS */
 
     if (size) {
 #if OPT_TRACE
