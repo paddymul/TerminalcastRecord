@@ -213,6 +213,16 @@ readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
     }
 
     if (size) {
+      int j;
+	for (j = 0; j < size; j++) {
+          /*
+	    if (!(i % 16))
+		TRACE(("%s", i ? "\n    " : "READ"));
+          */
+          fprintf(stderr, "%c", data->last[j]);//, data->last[i]);
+	    //TRACE((" %02X", data->last[i]));
+        }
+
 #if OPT_TRACE
 	int i;
 
