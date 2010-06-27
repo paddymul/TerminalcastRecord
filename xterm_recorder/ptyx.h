@@ -1953,6 +1953,7 @@ typedef struct {
 	char **		tcap_fkeys;
 	char		tcap_area[TERMCAP_SIZE];
 #endif
+  Boolean         isRecording;
 } TScreen;
 
 typedef struct _TekPart {

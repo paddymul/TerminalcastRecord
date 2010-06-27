@@ -161,6 +161,8 @@ static void do_titeInhibit     PROTO_XT_CALLBACK_ARGS;
 static void do_visualbell      PROTO_XT_CALLBACK_ARGS;
 static void do_vtfont          PROTO_XT_CALLBACK_ARGS;
 
+static void do_startrecording  PROTO_XT_CALLBACK_ARGS;
+
 #ifdef ALLOWLOGGING
 static void do_logging         PROTO_XT_CALLBACK_ARGS;
 #endif
@@ -306,12 +308,14 @@ MenuEntry mainMenuEntries[] = {
     { "quit",		do_quit,	NULL }};
 
 MenuEntry vtMenuEntries[] = {
+    { "start_recording", do_startrecording, NULL },
     { "scrollbar",	do_scrollbar,	NULL },
     { "jumpscroll",	do_jumpscroll,	NULL },
     { "reversevideo",	do_reversevideo, NULL },
     { "autowrap",	do_autowrap,	NULL },
     { "reversewrap",	do_reversewrap, NULL },
     { "autolinefeed",	do_autolinefeed, NULL },
+
     { "appcursor",	do_appcursor,	NULL },
     { "appkeypad",	do_appkeypad,	NULL },
     { "scrollkey",	do_scrollkey,	NULL },
@@ -1171,6 +1175,17 @@ do_quit(Widget gw GCC_UNUSED,
 /*
  * vt menu callbacks
  */
+
+static void 
+do_startrecording(Widget gw GCC_UNUSED,
+	     XtPointer closure GCC_UNUSED,
+	     XtPointer data GCC_UNUSED)
+{
+    ToggleScrollBar(term);
+    TScreen *screen = TScreenOf(term);
+    screen->isRecording = !    screen->isRecording;
+}
+
 
 static void
 do_scrollbar(Widget gw GCC_UNUSED,
